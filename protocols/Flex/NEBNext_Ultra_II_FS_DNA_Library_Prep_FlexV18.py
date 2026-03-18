@@ -546,9 +546,8 @@ def run(protocol: protocol_api.ProtocolContext):
         protocol.delay(seconds=3)
         p50.dispense(9, sample_plate[c])
         p50.mix(10, 20, sample_plate[c].bottom(0.5))
+        p50.blow_out(sample_plate[c].top(-2))
         p50.drop_tip()
-
-    # ── Thermocycler: fragmentation + end repair (NEB 2.1.5) ──
     # Hold at 4°C for 2 min after ERAT addition (equilibrate before ramp)
     tc_close()
     if not DRYRUN:
@@ -635,6 +634,7 @@ def run(protocol: protocol_api.ProtocolContext):
         # too small for the 50 µL mix. Tip is empty after dispense.
         p50.configure_for_volume(50)
         p50.mix(10, 50, sample_plate[c].bottom(0.5))
+        p50.blow_out(sample_plate[c].top(-2))
         p50.drop_tip()
 
     # ── USER incubation: 37C / 15 min, lid >= 47C (NEB 2.2.5) ──
@@ -677,6 +677,7 @@ def run(protocol: protocol_api.ProtocolContext):
         protocol.delay(seconds=3)
         p50.dispense(28.5, sample_plate[c])
         p50.mix(10, 50, sample_plate[c].bottom(0.5))
+        p50.blow_out(sample_plate[c].top(-2))
         p50.drop_tip()
 
     # ── 5. First bead bind: 40 uL = 0.4× (NEB 2.3.2) ──
@@ -695,6 +696,7 @@ def run(protocol: protocol_api.ProtocolContext):
         p50.drop_tip()
         # p1000 mixes beads into sample (100 µL exceeds p50 max)
         p1000.mix(10, 100, sample_plate[c].bottom(0.5))
+        p1000.blow_out(sample_plate[c].top(-2))
         p1000.drop_tip()
 
     if not DRYRUN:
@@ -714,13 +716,13 @@ def run(protocol: protocol_api.ProtocolContext):
         p1000.move_to(sample_plate[c].center())
         p1000.aspirate(140, sample_plate[c].bottom(3), rate=0.25)
         p1000.move_to(sample_plate[c].top())
-        p1000.dispense(140, transfer_plate[c])
+        p1000.dispense(140, transfer_plate[c].top(-2))
         p1000.blow_out(transfer_plate[c].top(-2))
-        # Pass 2: sweep (200 µL from z=1, gets residual + air)
+        # Pass 2: sweep (200 µL from z=0.5, gets residual + air)
         p1000.move_to(sample_plate[c].center())
         p1000.aspirate(200, bead_loc(sample_plate[c], 'sup'), rate=0.1)
         p1000.move_to(sample_plate[c].top())
-        p1000.dispense(200, transfer_plate[c])
+        p1000.dispense(200, transfer_plate[c].top(-2))
         p1000.blow_out(transfer_plate[c].top(-2))
         p1000.drop_tip()
 
@@ -770,6 +772,7 @@ def run(protocol: protocol_api.ProtocolContext):
         # Mix beads into sample
         p1000.pick_up_tip(p1000_tips.get_tip())
         p1000.mix(10, 130, transfer_plate[c].bottom(0.5))
+        p1000.blow_out(transfer_plate[c].top(-2))
         p1000.drop_tip()
 
     if not DRYRUN:
@@ -838,6 +841,7 @@ def run(protocol: protocol_api.ProtocolContext):
     for c in COLS:
         p50.pick_up_tip(p50_tips.get_tip())
         p50.mix(10, 15, transfer_plate[c].bottom(0.5))
+        p50.blow_out(transfer_plate[c].top(-2))
         p50.drop_tip()
 
     if not DRYRUN:
@@ -952,6 +956,7 @@ def run(protocol: protocol_api.ProtocolContext):
     for c in COLS:
         p50.pick_up_tip(p50_tips.get_tip())
         p50.mix(10, 40, pcr_plate[c].bottom(0.5))
+        p50.blow_out(pcr_plate[c].top(-2))
         p50.drop_tip()
 
     # ── PCR thermocycling (NEB 2.4.3) ──
@@ -1023,6 +1028,7 @@ def run(protocol: protocol_api.ProtocolContext):
         p50.drop_tip()
         # p1000 mixes beads into sample (80 µL exceeds p50 max)
         p1000.mix(10, 80, pcr_plate[c].bottom(0.5))
+        p1000.blow_out(pcr_plate[c].top(-2))
         p1000.drop_tip()
 
     if not DRYRUN:
@@ -1089,6 +1095,7 @@ def run(protocol: protocol_api.ProtocolContext):
     for c in COLS:
         p50.pick_up_tip(p50_tips.get_tip())
         p50.mix(10, 25, pcr_plate[c].bottom(0.5))
+        p50.blow_out(pcr_plate[c].top(-2))
         p50.drop_tip()
 
     if not DRYRUN:
