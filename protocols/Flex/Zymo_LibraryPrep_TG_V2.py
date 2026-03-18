@@ -60,7 +60,10 @@ def run(protocol: protocol_api.ProtocolContext):
 
 # LOAD MODULES
     temp_module = protocol.load_module('temperature module gen2', 'C1')
-    temp_adapter = temp_module.load_adapter('opentrons_96_well_aluminum_block')
+    # Use 'opentrons_96_pcr_adapter' (not the older 'opentrons_96_well_aluminum_block').
+    # The block definition adds 18.16 mm to the Z-stack vs 13.85 mm for the PCR adapter
+    # — a 4.3 mm difference that prevented tips from reaching the well bottom.
+    temp_adapter = temp_module.load_adapter('opentrons_96_pcr_adapter')
     tc_mod = protocol.load_module(module_name="thermocyclerModuleV2")
     tc_mod.open_lid()
     mag_block = protocol.load_module('magneticBlockV1', 'D2') 

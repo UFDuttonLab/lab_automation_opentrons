@@ -60,7 +60,10 @@ def run(protocol: protocol_api.ProtocolContext):
     # Changed from trash bin to waste chute (fixed in slot D3)
     waste_chute = protocol.load_waste_chute()
     temp_module = protocol.load_module('temperature module gen2', 'A3')
-    temp_adapter = temp_module.load_adapter('opentrons_96_well_aluminum_block')
+    # Use 'opentrons_96_pcr_adapter' (not the older 'opentrons_96_well_aluminum_block').
+    # The block definition adds 18.16 mm to the Z-stack vs 13.85 mm for the PCR adapter
+    # — a 4.3 mm difference that prevented tips from reaching the well bottom.
+    temp_adapter = temp_module.load_adapter('opentrons_96_pcr_adapter')
     mag_block = protocol.load_module('magneticBlockV1', 'C1') 
     heater_shaker = protocol.load_module('heaterShakerModuleV1', 'D1')
 
