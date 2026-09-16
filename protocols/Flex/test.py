@@ -32,7 +32,7 @@ metadata = {
 
 requirements = {
     'robotType': 'Flex',
-    'apiLevel': '2.28'
+    'apiLevel': '2.30'
 }
 
 
