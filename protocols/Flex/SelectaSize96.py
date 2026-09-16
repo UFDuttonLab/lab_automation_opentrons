@@ -66,7 +66,7 @@ def run(protocol: protocol_api.ProtocolContext):
 # LABWARE
     transfer_tips_200 = protocol.load_labware('opentrons_flex_96_tiprack_200ul', 'A2') #tips used for prepping reagents
 
-    full_adapter = protocol.load_adapter('opentrons_flex_96_tiprack_adapter', 'A1')
+    full_adapter = protocol.load_adapter('opentrons_flex_96_tiprack_adapter', 'B1')
     magbead_tips_200 = full_adapter.load_labware('opentrons_flex_96_tiprack_200ul')
 
     wash_adapter = protocol.load_adapter('opentrons_flex_96_tiprack_adapter', 'B3')
