@@ -99,9 +99,6 @@ def run(protocol: protocol_api.ProtocolContext):
     
 # FUNCTIONS
     
-    def drop_tip(pipette): #drop tips
-        pipette.return_tip() if DryRun else pipette.drop_tip(waste_chute)
-
 
 # START
     protocol.comment('------STARTING PROTOCOL------')
@@ -124,11 +121,11 @@ def run(protocol: protocol_api.ProtocolContext):
         pip96.dispense(26, current_column[0].top()) #dispense in samples without touching samples
         pip96.blow_out(current_column[0].top(2)) #blow out residue
 
-        if col_idx == 6: #midpoint mix
+        if col_idx == 5: #midpoint mix
             pip96.mix(repetitions=5, volume=100, location=water_magbead_mix, rate=1.5)
             pip96.blow_out(water_magbead_mix)
 
-    drop_tip(pip96) #drop tips
+    pip96.drop_tip(waste_chute) #always trash - returning partial-column tips breaks pickup of the next column
 
     protocol.comment('STEP 3: Mix Samples')
 
@@ -137,6 +134,7 @@ def run(protocol: protocol_api.ProtocolContext):
     pip96.mix(volume=100, location=sample_plate["A1"], repetitions=10) #mix up the sample with magbeads
     pip96.mix(volume=100, location=sample_plate["A1"], repetitions=10, aspirate_flow_rate=50, dispense_flow_rate=50) #slower mix after
     pip96.blow_out(sample_plate["A1"].top()) #blow out residuals
+    pip96.move_to(sample_plate["A1"].top(z=50)) #retract clear of the plate before the delay + gripper move
 
     # Incubate
     protocol.comment('STEP 4: Incubate samples at room temp')
@@ -176,7 +174,7 @@ def run(protocol: protocol_api.ProtocolContext):
             pip96.dispense(50, current_column[0].top()) #dispense in samples without touching samples
             pip96.blow_out(current_column[0].top()) #blow out residue
     
-            if col_idx == 6: #midpoint mix
+            if col_idx == 5: #midpoint mix
                 pip96.mix(repetitions=5, volume=100, location=dna_wash_buffer, rate=1.5)
                 pip96.blow_out(dna_wash_buffer)
     pip96.drop_tip()
@@ -189,10 +187,10 @@ def run(protocol: protocol_api.ProtocolContext):
 
     pip96.configure_nozzle_layout(style=ALL, tip_racks=[wash_tips_50]) #get full tips
     pip96.pick_up_tip()
-    pip96.aspirate(50, sample_plate['A1'].bottom(0.1), rate=0.5) #draw up mag bead mix slow 
+    pip96.aspirate(50, sample_plate['A1'].bottom(0.1), rate=0.5) #draw up wash buffer slow (first pass)
     pip96.dispense(50, waste.top()) #dispense waste
     pip96.blow_out(waste)
-    pip96.aspirate(10, sample_plate['A1'].bottom(0.1), rate=0.5) #small second aspiration to ensure all residual is removed
+    pip96.aspirate(10, sample_plate['A1'].bottom(0.1), rate=0.5) #second pass to ensure all residual wash buffer is removed
     pip96.dispense(10, waste.top())
     pip96.drop_tip()
 
@@ -205,11 +203,11 @@ def run(protocol: protocol_api.ProtocolContext):
 
     for col_idx in range(12):
             current_column = sample_columns[col_idx]
-            pip96.aspirate(50, dnase_free_water.bottom(0.3), rate=0.5)  # elution asipiration
-            pip96.dispense(50, current_column[0].top()) #dispense in samples without touching samples
+            pip96.aspirate(20, dnase_free_water.bottom(0.3), rate=0.5)  # elution aspiration
+            pip96.dispense(20, current_column[0].top()) #dispense in samples without touching samples
             pip96.blow_out(current_column[0].top()) #blow out residue
     
-            if col_idx == 6: #midpoint mix
+            if col_idx == 5: #midpoint mix
                 pip96.mix(repetitions=5, volume=100, location=dnase_free_water, rate=1.5)
                 pip96.blow_out(dnase_free_water)
     pip96.drop_tip()
@@ -221,7 +219,7 @@ def run(protocol: protocol_api.ProtocolContext):
 
     pip96.configure_nozzle_layout(style=ALL, tip_racks=[elution_tips_50]) #get full tips
     pip96.pick_up_tip()
-    pip96.mix(10, 40, location= sample_plate["A1"])
+    pip96.mix(10, 15, location= sample_plate["A1"]) #match elution add volume so mix doesn't pull air
     pip96.blow_out()
     pip96.return_tip() #put them back will use for removing elution
 
