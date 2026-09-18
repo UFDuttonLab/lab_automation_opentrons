@@ -364,11 +364,28 @@ def run(ctx: protocol_api.ProtocolContext):
     water_res = ctx.load_labware(RESERVOIR_LOADNAME, "C3", "Nuclease-free water")
 
     # Full-pickup tip racks must sit in the 96-tiprack adapter.
-    # Four pickups: binding+load, wash 1, wash 2, elution.
-    tip_racks = []
-    for slot in ("A1", "B1", "C1", "D1"):
-        adapter = ctx.load_adapter("opentrons_flex_96_tiprack_adapter", slot)
-        tip_racks.append(adapter.load_labware(TIPRACK_LOADNAME))
+    # Four pickups: binding+load, wash 1, wash 2, elution. C1 now holds the
+    # heater block, so only A1/B1/D1 carry tip racks on deck; the fourth
+    # rack is staged in C4 and swapped onto D1 by the gripper before
+    # elution -- see the REPLENISH block after STEP 5.
+    tiprack_adapters = {
+        slot: ctx.load_adapter("opentrons_flex_96_tiprack_adapter", slot)
+        for slot in ("A1", "B1", "D1")
+    }
+    tip_racks = [
+        tiprack_adapters[slot].load_labware(TIPRACK_LOADNAME)
+        for slot in ("A1", "B1", "D1")
+    ]
+    tips_d1 = tip_racks[-1]
+
+    # Staged spare rack for the gripper reload below. C4 (not A4, which
+    # vm_mod.manifold_dock already uses; not D4, which needs a deck plate
+    # adapter to coexist with the waste chute in D3) must be enabled in
+    # the robot's deck configuration (touchscreen or Opentrons App).
+    spare_tips = ctx.load_labware(
+        TIPRACK_LOADNAME, "C4",
+        "Spare tip rack, staged for gripper reload before elution",
+    )
 
     # -----------------------------------------------------------------
     # PIPETTE
@@ -546,6 +563,19 @@ def run(ctx: protocol_api.ProtocolContext):
     vacuum(ctx, vm_mod, dry_pressure, dry_time)
 
     # =================================================================
+    # REPLENISH TIPS FOR ELUTION
+    # =================================================================
+    # Only 3 on-deck tip racks now (C1 is the heater block), but 4
+    # full-rack pickups are needed. Discard the spent wash-2 rack via the
+    # waste chute, then gripper the spare rack from its C4 staging slot
+    # onto the freed D1 adapter. A true off-deck stash can't be
+    # gripper-fed (off-deck moves require use_gripper=False), which is
+    # why the spare lives in a staging-area slot instead.
+    ctx.comment(">> Swapping in spare tip rack for elution (C1 unavailable)")
+    ctx.move_labware(tips_d1, waste_chute, use_gripper=True)
+    ctx.move_labware(spare_tips, tiprack_adapters["D1"], use_gripper=True)
+
+    # =================================================================
     # STEP 6 - REPOSITION FOR ELUTION
     # =================================================================
     # The elution plate is collected by physically moving it beneath the
@@ -565,7 +595,7 @@ def run(ctx: protocol_api.ProtocolContext):
     # STEP 7 - ELUTION                       (kit manual step 13)
     # =================================================================
     ctx.comment(f">> STEP 7: elute in {elution_volume:.0f} uL")
-    pip.pick_up_tip()
+    pip.pick_up_tip(spare_tips["A1"])  # explicit: spare_tips isn't in pip's tracked tip_racks
     pip.flow_rate.aspirate = FR_WATER_ASP
     pip.flow_rate.dispense = FR_WATER_DISP
     pip.flow_rate.blow_out = FR_ELUTION_BLOWOUT
