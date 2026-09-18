@@ -211,17 +211,16 @@ def add_parameters(parameters: ParameterContext):
         ],
     )
 
+    # Kit manual specifies 20 uL for max concentration (Specifications
+    # section allows up to 100 uL), but that 20 uL assumes CENTRIFUGATION.
+    # This protocol uses vacuum instead, and small-volume recovery off the
+    # membrane and frit may differ -- validate 20 vs 50 empirically before
+    # trusting the low end. Opentrons caps parameter descriptions at 100
+    # characters, so the rest of the rationale lives here, not below.
     parameters.add_float(
         variable_name="elution_volume",
         display_name="Elution Volume (uL)",
-        description=(
-            "Water added per well at elution. The kit manual specifies 20 uL "
-            "for maximum concentration, but the Specifications section "
-            "supports up to 100 uL. NOTE: the manual's 20 uL assumes "
-            "CENTRIFUGATION; this protocol uses vacuum, and small-volume "
-            "recovery off the membrane and frit may differ. Validate 20 vs "
-            "50 empirically before trusting the low end."
-        ),
+        description="Water added per well at elution (20-100 uL; see comment above).",
         default=50.0,
         minimum=20.0,
         maximum=100.0,
@@ -258,13 +257,14 @@ def add_parameters(parameters: ParameterContext):
         unit="mbar",
     )
 
+    # Residual ethanol carryover is the most common cause of downstream
+    # PCR failure -- this extended vacuum step dries the membranes to
+    # prevent it. (Kept as a comment: Opentrons caps descriptions at 100
+    # characters.)
     parameters.add_int(
         variable_name="dry_time",
         display_name="Membrane Dry Duration (s)",
-        description=(
-            "Extended vacuum to dry the membranes. Residual ethanol carryover "
-            "is the most common cause of downstream PCR failure."
-        ),
+        description="Extended vacuum to dry membranes (see comment above).",
         default=300,
         minimum=60,
         maximum=900,
@@ -281,13 +281,12 @@ def add_parameters(parameters: ParameterContext):
         unit="s",
     )
 
+    # For deck/motion checks only -- do not use with real samples. (Kept
+    # as a comment: Opentrons caps descriptions at 100 characters.)
     parameters.add_bool(
         variable_name="dry_run",
         display_name="Dry Run",
-        description=(
-            "Skip incubations and shorten vacuum steps. For deck/motion "
-            "checks only -- do not use with real samples."
-        ),
+        description="Skip incubations, shorten vacuum. Not for real samples.",
         default=False,
     )
 
