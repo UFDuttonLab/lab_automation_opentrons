@@ -592,11 +592,17 @@ def run(ctx: protocol_api.ProtocolContext):
 
     # Collar (carrying the filter plate) off to the dock at A4.
     ctx.move_labware(manifold_collar, vm_mod.manifold_dock, use_gripper=True)
-    # Elution plate only -- the spacer stays put at D2. Gripping just the
-    # plate avoids relying on gripper-offset calibration for the 3D-printed
-    # spacer (uncalibrated as of this run); the spacer only needs to sit at
-    # the right height, not be safely liftable.
-    ctx.move_labware(elution_plate, vm_mod, use_gripper=True)
+    # Spacer + elution plate together, as one gripped unit, onto the now-
+    # empty module. We can't model "spacer stays behind, collar rests on
+    # top of it" in the Opentrons API: load_adapter() only accepts a deck
+    # slot / staging slot / module as its location, never another labware
+    # or adapter, so the collar can't be stacked onto the spacer the way
+    # the spacer is stacked onto the module. The spacer therefore has to
+    # travel with whatever's already loaded on it (the elution plate) --
+    # which means its gripper offset needs to be calibrated before a real
+    # run, since it's a 3D-printed part with a different height than
+    # Opentrons' own adapters.
+    ctx.move_labware(tall_spacer, vm_mod, use_gripper=True)
     # Filter plate onto the elution plate.
     ctx.move_labware(filter_plate, elution_plate, use_gripper=True)
     # Collar back down over the stack.
