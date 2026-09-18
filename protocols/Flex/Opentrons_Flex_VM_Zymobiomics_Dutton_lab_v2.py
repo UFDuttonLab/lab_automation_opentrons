@@ -330,6 +330,15 @@ def run(ctx: protocol_api.ProtocolContext):
         if not dry_run and seconds > 0:
             ctx.delay(seconds=seconds)
 
+    def finish_tip(pipette):
+        """On a dry run, return the tip to its rack instead of trashing it,
+        so repeat motion/deck-config test runs don't burn a fresh tip rack
+        (or, for the elution tip, the staged spare) every time."""
+        if dry_run:
+            pipette.return_tip()
+        else:
+            pipette.drop_tip(waste_chute)
+
     # -----------------------------------------------------------------
     # MODULES AND FIXTURES
     # -----------------------------------------------------------------
@@ -517,7 +526,7 @@ def run(ctx: protocol_api.ProtocolContext):
         pip.blow_out(filter_plate["A1"].top(z=DISPENSE_ABOVE_Z))
         vacuum(ctx, vm_mod, vac_pressure, vac_time)
 
-    pip.drop_tip(waste_chute)
+    finish_tip(pip)
 
     # =================================================================
     # STEP 3 - DNA WASH BUFFER 1             (kit manual step 10)
@@ -531,7 +540,7 @@ def run(ctx: protocol_api.ProtocolContext):
     pip.air_gap(AIR_GAP)
     pip.dispense(WASH1_VOLUME + AIR_GAP, filter_plate["A1"].top(z=DISPENSE_ABOVE_Z))
     pip.blow_out(filter_plate["A1"].top(z=DISPENSE_ABOVE_Z))
-    pip.drop_tip(waste_chute)
+    finish_tip(pip)
 
     vacuum(ctx, vm_mod, vac_pressure, vac_time)
 
@@ -555,7 +564,7 @@ def run(ctx: protocol_api.ProtocolContext):
         if wash2_volume == WASH2_VOLUME_A:
             vacuum(ctx, vm_mod, vac_pressure, vac_time)
 
-    pip.drop_tip(waste_chute)
+    finish_tip(pip)
     vacuum(ctx, vm_mod, vac_pressure, vac_time)
 
     ctx.comment(">> STEP 5: dry the membranes")
@@ -583,8 +592,11 @@ def run(ctx: protocol_api.ProtocolContext):
 
     # Collar (carrying the filter plate) off to the dock at A4.
     ctx.move_labware(manifold_collar, vm_mod.manifold_dock, use_gripper=True)
-    # Spacer + elution plate onto the manifold.
-    ctx.move_labware(tall_spacer, vm_mod, use_gripper=True)
+    # Elution plate only -- the spacer stays put at D2. Gripping just the
+    # plate avoids relying on gripper-offset calibration for the 3D-printed
+    # spacer (uncalibrated as of this run); the spacer only needs to sit at
+    # the right height, not be safely liftable.
+    ctx.move_labware(elution_plate, vm_mod, use_gripper=True)
     # Filter plate onto the elution plate.
     ctx.move_labware(filter_plate, elution_plate, use_gripper=True)
     # Collar back down over the stack.
@@ -606,7 +618,7 @@ def run(ctx: protocol_api.ProtocolContext):
         filter_plate["A1"].bottom(z=ELUTION_DISPENSE_Z),
     )
     pip.blow_out(filter_plate["A1"].bottom(z=ELUTION_DISPENSE_Z))
-    pip.drop_tip(waste_chute)
+    finish_tip(pip)
 
     hold(elution_incubation)
     vacuum(ctx, vm_mod, vac_pressure, vac_time)
